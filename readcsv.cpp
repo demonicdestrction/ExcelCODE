@@ -6,6 +6,7 @@
 
 using namespace std;
 #define MAXSIZE 500
+#define HALF 1
 typedef struct Block * List;
 struct Block{
     string name;
@@ -14,30 +15,6 @@ struct Block{
     int num1;
     int num2;
     List Next;
-};
-typedef struct House * Ho;
-struct House{
-    int ID;
-    string name;
-    int floors;
-    List FirstBlock;
-    vector<float> areas;
-
-     void countAreas() {
-        for(int i = 1;i <= floors;i++){
-          float tempArea = 0;
-          List tempBlock = FirstBlock;
-          while(tempBlock != nullptr){
-            if(((tempBlock ->num1) <= i) && (i <= tempBlock -> num2)){
-                tempArea += tempBlock -> area;
-            }
-            tempBlock = tempBlock -> Next;
-          }
-          //house.areas.push_back(tempArea);
-          areas.push_back(tempArea);
-          cout << "第" << i << "层的面积：" << tempArea << endl;
-        }
-    }
 };
 Block* createBlock(string name, float area,string type, int num1, int num2) {
     Block* newBlock = new Block;
@@ -50,77 +27,40 @@ Block* createBlock(string name, float area,string type, int num1, int num2) {
     newBlock->Next = nullptr;
     return newBlock;
 }
-void countAreas1(House house){
-    for(int i = 1;i <= house.floors;i++){
+typedef struct House * Ho;
+struct House{
+    int ID;
+    string name;
+    int floors;
+    List FirstBlock;
+    vector<float> areas;
+    float footprintarea;
+    //根据块面积算层面积
+    void countAreas() {
+        for(int i = 1;i <= floors;i++){
           float tempArea = 0;
-          List tempBlock = house.FirstBlock;
+          List tempBlock = FirstBlock;
           while(tempBlock != nullptr){
             if(((tempBlock ->num1) <= i) && (i <= tempBlock -> num2)){
-                tempArea += tempBlock -> area;
+                tempArea += tempBlock -> area * HALF;
             }
             tempBlock = tempBlock -> Next;
           }
-          //house.areas.push_back(tempArea);
-          house.areas.push_back(tempArea);
-          cout << "第" << i << "层的面积：" << tempArea << endl;
+          areas.push_back(tempArea);
+          //cout << "第" << i << "层的面积：" << tempArea << endl;
+        }
     }
-    cout << house.areas.size() << endl;
-}
-void creatCsv(vector<House> houses){
-    ofstream file("面积导出.csv");
-
-    if (!file.is_open()) {
-        cerr << "Unable to open file";
-    }
-    // 写入表头
-    file << "ID,资产名称,序号,面积\n";
-
-    for (int i = 0; i < houses.size(); ++i) {
-        //House temp1 = houses[i];
-        file << houses[i].ID << ", " << houses[i].name;
-         List temp = houses[i].FirstBlock;
-         int j = 1;
-         while (temp != nullptr){
-             if(j > 1){
-                file << "   ,   ";
-             }
-             file << " ,"<< j++ << "," << temp -> area  << endl;
-            //cout << temp -> name << " "<< temp -> area << endl;
-            temp = temp -> Next;
+    //根据块面积算占地面积
+     void countFootprintarea(){
+         float tempArea = 0;
+         List tempBlock = FirstBlock;
+         while(tempBlock != nullptr){
+             tempArea += tempBlock -> area;
+             tempBlock = tempBlock -> Next;
          }
-         //countAreas(houses[i]);
-    }
-    file.close();
-}
-void creatCsv1(vector<House> houses){
-    ofstream file("面积导出1.csv");
-
-    if (!file.is_open()) {
-        cerr << "Unable to open file";
-    }
-    // 写入表头
-    file << "ID,资产名称,序号,面积\n";
-
-    for (int i = 0; i < houses.size(); ++i) {
-        vector<float> areas = houses[i].areas;
-        //House temp1 = houses[i];
-        file << houses[i].ID << ", " << houses[i].name;
-         //List temp = houses[i].FirstBlock;
-         int j = 1;
-         //cout << houses[i].areas.size();
-         //cout << areas.size();
-         for(int k = 0; k < areas.size(); k++){
-             if(j > 1){
-                file << "   ,   ";
-             }
-             file << " ,"<< j++ << "," << areas[k]  << endl;
-            //cout << temp -> name << " "<< temp -> area << endl;
-            //temp = temp -> Next;
-         }
-         //countAreas(houses[i]);
-    }
-    file.close();
-}
+         footprintarea = tempArea;
+     }
+};
 House* createHouse(int ID, string name, int floors) {
     House* newHouse = new House;
     //List newHouse = (List)malloc(sizeof(struct House));
@@ -129,16 +69,53 @@ House* createHouse(int ID, string name, int floors) {
     newHouse->floors = floors;
     return newHouse;
 }
-int main() {
-    ifstream file("房屋3.csv");
+//导出层面积文件
+void creatCsv(vector<House> houses){
+    ofstream file("面积导出.csv");
+    if (!file.is_open()) {
+        cerr << "打不开文件！";
+    }
+    file << "ID,资产名称,序号,面积\n";
+    for (int i = 0; i < houses.size(); ++i) {
+        vector<float> areas = houses[i].areas;
+        file << houses[i].ID << "," << houses[i].name;
+        int j = 1;
+        for(int k = 0; k < areas.size(); k++){
+             if(j > 1){
+                file << ",";
+             }
+             file << ","<< j++ << "," << areas[k]  << endl;
+         }
+    }
+    file.close();
+}
+//打印块面积
+void printHouseBlock(House house){
+    cout << house.ID << ", Name: " << house.name << endl;
+    List temp = house.FirstBlock;
+    int i = 1;
+    while (temp != nullptr){
+        cout << "第"<< i++ <<"块的面积：" << temp -> area  << endl;
+        temp = temp -> Next;
+    }
+}
+//打印层面积
+void printFloorArea(House house){
+     for(int i = 0; i < house.areas.size(); i++){
+        cout << "第" << i + 1 << "层的面积：" <<house.areas[i] << endl;
+     }
+}
+//读取csv，存入house中
+vector<House> readcsv()
+{
+    ifstream file("房屋.csv");
     string line;
     vector<House> houses;
 
     // 跳过第一行（标题行）
-    if (std::getline(file, line)) {
+    if (getline(file, line)) {
     } else {
-        std::cerr << "NOTFOUNF File" << std::endl;
-        return 1;
+        cerr << "找不到文件" << endl;
     }
     List temp1;
     while (getline(file, line)) {
@@ -147,37 +124,29 @@ int main() {
         vector<string> values;
         while (getline(ss, item, ',')) {
             values.push_back(item);
-
         }
-        List block1 = createBlock(values[1],stof(values[2]),values[3],stoi(values[4]),stoi(values[5]));
-        House house1 = {stoi(values[0]),values[1],stoi(values[6]),block1};
-        //house1.FirstBlock = temp;
-        if(houses.size() > 1 && house1.name == houses[(houses.size()) - 1].name){
-               temp1 -> Next = block1;
-               temp1 = block1;
-               //free(temp1);
-               //free(house1);
+        List block = createBlock(values[1],stof(values[2]),values[3],stoi(values[4]),stoi(values[5]));
+        House house = {stoi(values[0]),values[1],stoi(values[6]),block};
+        if(houses.size() > 1 && house.name == houses[(houses.size()) - 1].name){
+               temp1 -> Next = block;
+               temp1 = block;
         }else{
-            temp1 = block1;
-            houses.push_back(house1);
+            temp1 = block;
+            houses.push_back(house);
         }
     }
-    cout << houses.size() << endl;
-    for (int i = 0; i < houses.size(); ++i) {
-        cout << houses[i].ID << ", Name: " << houses[i].name << endl;
-         List temp = houses[i].FirstBlock;
-         int j = 1;
-         while (temp != nullptr){
-             cout << "第"<< j++ <<"块的面积：" <<temp -> area  << endl;
-            //cout << temp -> name << " "<< temp -> area << endl;
-            temp = temp -> Next;
-         }
-         //countAreas1(houses[i]);
-         houses[i].countAreas();
-    }
-    creatCsv1(houses);
-    //cout << houses[1].name << endl;
     file.close();
+    return houses;
+}
+int main() {
+    vector<House> houses = readcsv();
+    for (int i = 0; i < houses.size(); ++i) {
+         houses[i].countAreas();
+         houses[i].countFootprintarea();
 
+         printHouseBlock(houses[i]);
+         printFloorArea(houses[i]);
+    }
+    creatCsv(houses);
     return 0;
 }
