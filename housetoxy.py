@@ -33,11 +33,11 @@ def house_to_xy(workspace, output_file_name):
     arcpy.SpatialJoin_analysis(layer_name2, layer_name1, output_fc, 
                                 join_operation = "JOIN_ONE_TO_ONE",match_option = "INTERSECT")                  
     arcpy.FeatureVerticesToPoints_management(output_fc, output_fc1, "ALL") 
-    deletable_field_names(output_fc1, ["Layer", "TextString"])
+    deletable_field_names(output_fc1, ["Layer", "Text"])
     
     output_point1 = "转坐标后点"
     output_point2 = output_file_name + "\转坐标后点.shp"
-    arcpy.Project_management(output_point, output_point1, arcpy.SpatialReference(4490))
+    arcpy.Project_management(output_fc1, output_point1, arcpy.SpatialReference(4490))
     #arcpy.AddGeometryAttributes_management(output_point1, "POINT_X_Y_Z_M") 
     arcpy.AddXY_management(output_point2) 
     arcpy.conversion.TableToExcel(output_point2, output_excel)
@@ -49,17 +49,17 @@ def house_to_xy1(workspace, output_file_name):
     polygon_fc = "Polygon"        # 转换后的面要素类 
 
     point1 = "幢号"
-    point2 = "承租方点"
+    point2 = "物业名"
 
     layer_name1 = "外扩线面"
     layer_name2 = "物业面"
 
     where_clause1 = "Layer = '幢号'"
     where_clause2 = "Layer = 'JMD'"
-    where_clause3 = "Layer = '承租方'"
+    where_clause3 = "Layer = '物业出租'"
     where_clause4 = "Layer = 'JMD' OR Layer = 'ASSIST'"
     where_clause5 = "Layer = '外扩线'"
-    where_clause6 = "Layer = 'JZD_物业'"
+    where_clause6 = "Layer = '物业用地线'"
 
     arcpy.MakeFeatureLayer_management(annotation_fc, point1) 
     arcpy.MakeFeatureLayer_management(annotation_fc, point2)
@@ -92,7 +92,7 @@ def house_to_xy1(workspace, output_file_name):
     output_point = "外扩线带栋号点"
     output_excel = "经纬度表.xls"
     
-    arcpy.SpatialJoin_analysis(layer_name2, output_fc2, output_fc, 
+    arcpy.SpatialJoin_analysis(layer_name1, output_fc2, output_fc, 
                            join_operation = "JOIN_ONE_TO_ONE",match_option = "INTERSECT")
     arcpy.FeatureVerticesToPoints_management(output_fc, output_point, "ALL") 
     deletable_field_names(output_point, ["Layer", "dh"])
@@ -105,9 +105,6 @@ def house_to_xy1(workspace, output_file_name):
     arcpy.conversion.TableToExcel(output_point2, output_excel)
     
 #house_to_xy1(workspace, output_file_name)，其一为dwg路径，后为存储数据的问价夹名   
-#house_to_xy("D:\GIS\岭头.dwg","D:\GIS\结果")#标了栋号的
-house_to_xy1("D:\GIS\岭头.dwg","D:\GIS\结果")#只有栋号只是是数字1,2,3的
-
- 
-
+house_to_xy("D:\GIS\模板.dwg","D:\GIS\结果")#标了栋号的
+#house_to_xy1("D:\GIS\模板.dwg","D:\GIS\结果")#只有栋号只是是数字1,2,3的
 
